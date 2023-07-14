@@ -12,6 +12,7 @@ import os
 import random
 import shutil
 import time
+import tifffile
 from itertools import repeat
 from multiprocessing.pool import Pool, ThreadPool
 from pathlib import Path
@@ -691,7 +692,8 @@ class LoadImagesAndLabels(Dataset):
         if nl:
             labels[:, 1:5] = xyxy2xywhn(labels[:, 1:5], w=img.shape[1], h=img.shape[0], clip=True, eps=1E-3)
 
-        if self.augment:
+        #if self.augment:
+        if False:
             # Albumentations
             img, labels = self.albumentations(img, labels)
             nl = len(labels)  # update after albumentations
@@ -732,7 +734,8 @@ class LoadImagesAndLabels(Dataset):
             if fn.exists():  # load npy
                 im = np.load(fn)
             else:  # read image
-                im = cv2.imread(f)  # BGR
+                #im = cv2.imread(f)  # BGR
+                im = tifffile.imread(f)
                 assert im is not None, f'Image Not Found {f}'
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio
@@ -994,10 +997,13 @@ def verify_image_label(args):
     nm, nf, ne, nc, msg, segments = 0, 0, 0, 0, '', []  # number (missing, found, empty, corrupt), message, segments
     try:
         # verify images
-        im = Image.open(im_file)
-        im.verify()  # PIL verify
-        shape = exif_size(im)  # image size
+        #im = Image.open(im_file)
+        im = tifffile.imread(im_file)
+        #im.verify()  # PIL verify
+        #shape = exif_size(im)  # image size
+        shape = (im.shape[0], im.shape[1])
         assert (shape[0] > 9) & (shape[1] > 9), f'image size {shape} <10 pixels'
+        '''
         assert im.format.lower() in IMG_FORMATS, f'invalid image format {im.format}'
         if im.format.lower() in ('jpg', 'jpeg'):
             with open(im_file, 'rb') as f:
@@ -1005,7 +1011,7 @@ def verify_image_label(args):
                 if f.read() != b'\xff\xd9':  # corrupt JPEG
                     ImageOps.exif_transpose(Image.open(im_file)).save(im_file, 'JPEG', subsampling=0, quality=100)
                     msg = f'{prefix}WARNING ⚠️ {im_file}: corrupt JPEG restored and saved'
-
+        '''
         # verify labels
         if os.path.isfile(lb_file):
             nf = 1  # label found
