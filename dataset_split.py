@@ -7,12 +7,14 @@ First place the entire dataset folder in the root directory named as custom_data
 custom_dataset > images
                 labels
 '''
-print(os.getcwd())
-root_dir = '../custom_dataset'
-images = os.listdir(r"../custom_dataset/images")
-labels = os.listdir(r"../custom_dataset/labels")
+
+
+root_dir = '../6_channel_data'
+images = os.listdir(r"../6_channel_data/images")
+labels = os.listdir(r"../6_channel_data/labels")
+
 X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=42)
-directory = '../datasets/LIDAR_data'
+directory = '../datasets/Lidar_6_channel_data'
 
 if os.path.exists(directory):
     print(f"The directory '{directory}' exists.")
