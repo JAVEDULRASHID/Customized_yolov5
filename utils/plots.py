@@ -250,6 +250,10 @@ def plot_images(images, targets, paths=None, fname='images.jpg', names=None):
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
         im = im.transpose(1, 2, 0)
+        # code for 6 channel
+        if im.shape[2] == 6:
+            im = im[:, :, :3]
+
         mosaic[y:y + h, x:x + w, :] = im
 
     # Resize (optional)
