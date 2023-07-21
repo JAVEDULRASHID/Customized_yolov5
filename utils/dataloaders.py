@@ -429,7 +429,9 @@ class LoadStreams:
 def img2label_paths(img_paths):
     # Define label paths as a function of image paths
     sa, sb = f'{os.sep}images{os.sep}', f'{os.sep}labels{os.sep}'  # /images/, /labels/ substrings
-    return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+    lab_pth = [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+    #return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+    return [x.replace(f'{os.sep}intensity','') for x in lab_pth]
 
 
 class LoadImagesAndLabels(Dataset):
@@ -492,7 +494,6 @@ class LoadImagesAndLabels(Dataset):
             assert cache['hash'] == get_hash(self.label_files + self.im_files)  # identical hash
         except Exception:
             cache, exists = self.cache_labels(cache_path, prefix), False  # run cache ops
-
         # Display cache
         nf, nm, ne, nc, n = cache.pop('results')  # found, missing, empty, corrupt, total
         if exists and LOCAL_RANK in {-1, 0}:
@@ -735,7 +736,14 @@ class LoadImagesAndLabels(Dataset):
                 im = np.load(fn)
             else:  # read image
                 #im = cv2.imread(f)  # BGR
-                im = tifffile.imread(f)
+                path_i = f
+                path_r = path_i.replace('intensity', 'range')
+                path_r = path_r.replace('_i', '_r')
+
+                img_i = cv2.imread(path_i)
+                img_r = cv2.imread(path_r)
+                im = np.concatenate((img_i, img_r), axis=2)
+                #im = tifffile.imread(f)
                 assert im is not None, f'Image Not Found {f}'
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio
@@ -998,7 +1006,7 @@ def verify_image_label(args):
     try:
         # verify images
         #im = Image.open(im_file)
-        im = tifffile.imread(im_file)
+        im = cv2.imread(im_file)
         #im.verify()  # PIL verify
         #shape = exif_size(im)  # image size
         shape = (im.shape[0], im.shape[1])
